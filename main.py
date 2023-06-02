@@ -1,3 +1,6 @@
+from random import shuffle
+
+
 class Field:
     def __init__(self, column: int, row: int, ancestor=None):
         self.column = column
@@ -11,7 +14,7 @@ class Field:
             self.fig = None
 
     def __str__(self):
-        return self.str_column + str(self.row) + ':' + str(self.taken)
+        return self.str_column + str(self.row) + ':' + str(self.taken) + '-' + str(self.fig)
 
     def __add__(self, other: tuple):
         return Field(self.column+other[0], self.row+other[1])
@@ -38,11 +41,49 @@ class Board:
                             for column in ('a', 'b', 'c', 'd', 'e', 'f', 'g', 'h')) + '\n'
         return res
 
+    def __eq__(self, other):
+        temp = []
+        for field in self.files:
+            if self.files[field].fig:
+                if other.files[field].fig:
+                    temp.append(True)
+                else:
+                    temp.append(False)
+        return all(temp)
+
+    def fen(self):
+        res = []
+        for number in range(8, 0, -1):
+            line = ''
+            empty = 0
+            cols = 8
+            for letter in ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h']:
+                if self.files[letter + str(number)].fig:
+                    if empty != 0:
+                        line += str(empty) + 'Q'
+                        cols -= empty
+                        empty = 0
+                    else:
+                        line += 'Q'
+                    cols -= 1
+                else:
+                    # line += '1'
+                    empty += 1
+
+            if cols != 0:
+                res.append(line + str(cols))
+            else:
+                res.append(line)
+        res = '/'.join(line for line in res)
+
+        return res
+
     def available_files(self):
         res = []
         for key in self.files:
             if not self.files[key].taken:
                 res.append(key)
+        shuffle(res)  # TODO: validate
         return res
 
     def put_queen(self, queen, file):
@@ -82,41 +123,9 @@ class Queen:
             field += self.directions[direction]
             board.take_file(field)
 
-        # while direction == 'up' and field.row < 8:
-        #     field += (0, 1)
-        #     board.take_file(field)
-        #
-        # while direction == 'down' and field.row > 1:
-        #     field += (0, -1)
-        #     board.take_file(field)
-        #
-        # while direction == 'left' and field.column > 1:
-        #     field += (-1, 0)
-        #     board.take_file(field)
-        #
-        # while direction == 'right' and field.column < 8:
-        #     field += (1, 0)
-        #     board.take_file(field)
-        #
-        # while direction == 'left-down' and field.column > 1 and field.row > 1:
-        #     field += (1, -1)
-        #     board.take_file(field)
-        #
-        # while direction == 'right-down' and field.column < 8 and field.row > 1:
-        #     field += (1, -1)
-        #     board.take_file(field)
-        #
-        # while direction == 'left-up' and field.column > 1 and field.row < 8:
-        #     field += (-1, 1)
-        #     board.take_file(field)
-        #
-        # while direction == 'right-up' and field.column < 8 and field.row < 8:
-        #     field += (1, 1)
-        #     board.take_file(field)
-
     def take_files(self, board):
         board.files[self.pos.get_notation()].taken = True
-        board.files[self.pos.get_notation()].fig = self
+        board.files[self.pos.get_notation()].fig = True
         for d in self.directions:
             self.move(d, board)
 
@@ -134,12 +143,12 @@ def put_queens(queen, board, level=0):
         return board
 
 
-q = Queen((1, 1))
-b = Board()
-
-b1 = put_queens(q, b)
-print(b1)
-print('Queens are placed on')
-for field in b1.files:
-    if b1.files[field].fig:
-        print(b1.files[field])
+# q = Queen((1, 1))
+# b = Board()
+# 
+# b1 = put_queens(q, b)
+# print(b1)
+# print('Queens are placed on')
+# for field in b1.files:
+#     if b1.files[field].fig:
+#         print(b1.files[field])
